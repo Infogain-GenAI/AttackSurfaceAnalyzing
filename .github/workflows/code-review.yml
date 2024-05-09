@@ -1,6 +1,11 @@
 name: 'code-review'
 on:
   pull_request:
+permissions:
+  contents: write
+  pull-requests: write 
+  issues: read
+  packages: none
 jobs:
   code-review:
     runs-on: ubuntu-latest
