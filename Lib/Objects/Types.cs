@@ -309,7 +309,8 @@ namespace Microsoft.CST.AttackSurfaceAnalyzer.Types
     {
         COLLECT,
         MONITOR,
-        COMPARE
+        COMPARE,
+        INVENTORY
     }
 
     public enum TRANSPORT

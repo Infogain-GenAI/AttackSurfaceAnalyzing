@@ -1500,7 +1500,19 @@ namespace Microsoft.CST.AttackSurfaceAnalyzer.Cli
         {
             collectors = new List<BaseCollector>();
         }
+        public static void InsertInventoryRecords(string runId, string type, string softwareDetailsJson)
+        {
+            if (DatabaseManager is null)
+            {
+                Log.Error("Err_DatabaseManagerNull", "InsertInventoryRecords");
+                return;
+            }
 
+
+
+            // Insert the inventory record into the database.
+            DatabaseManager.InsertInventoryRecord(runId, type, softwareDetailsJson);
+        }
         // Used for monitors. This writes a little spinner animation to indicate that monitoring is underway
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1303:Do not pass literals as localized parameters", Justification = "These symbols won't be localized")]
         private static void WriteSpinner(ManualResetEvent untilDone)
