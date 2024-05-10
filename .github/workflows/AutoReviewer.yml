@@ -1,4 +1,4 @@
-name: 'code-review'
+name: 'AutoReviewer'
 on:
   pull_request:
 permissions:
