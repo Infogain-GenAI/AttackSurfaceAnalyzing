@@ -29,7 +29,7 @@ steps:
   inputs:
     SonarQube: 'sq_connect_asa' # Replace with your SonarQube service connection name
     scannerMode: 'MSBuild'
-    projectKey: 'GenAI_project' # Replace with your project key
+    projectKey: '07bc3a138198dc775b759be8d0ae72ad3719d42c' # Replace with your project key
     projectName: 'GenAI_project' # Replace with your project name
     
 - task: VSBuild@1
