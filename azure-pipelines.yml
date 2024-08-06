@@ -25,6 +25,13 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
+- task: SonarQubePrepare@6
+  inputs:
+    SonarQube: 'sq_connect' # Replace with your SonarQube service connection name
+    scannerMode: 'MSBuild'
+    projectKey: 'GenAI_project' # Replace with your project key
+    projectName: 'GenAI_project' # Replace with your project name
+    
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
@@ -32,7 +39,13 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+- task: SonarQubeAnalyze@6
+
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- task: SonarQubePublish@6
+  inputs:
+    pollingTimeoutSec: '300'
