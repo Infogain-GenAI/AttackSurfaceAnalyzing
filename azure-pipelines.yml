@@ -25,6 +25,11 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
+- script: |
+    echo Testing connectivity to SonarQube server...
+    curl -v http://172.18.65.185:9000/api/server/version
+  displayName: 'Test SonarQube Server Connectivity'
+  
 - task: SonarQubePrepare@6
   inputs:
     SonarQube: 'sq_connect_asa' # Replace with your SonarQube service connection name
