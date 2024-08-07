@@ -27,7 +27,7 @@ steps:
 
 - script: |
     echo Testing connectivity to SonarQube server...
-    curl -v http://172.18.65.185:9000/api/server/version
+    curl -v http://172.18.65.185:9000/sonarqubedb
   displayName: 'Test SonarQube Server Connectivity'
   timeoutInMinutes: 10
   
