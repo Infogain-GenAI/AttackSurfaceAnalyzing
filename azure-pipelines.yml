@@ -27,7 +27,7 @@ steps:
 
 - script: |
     echo Testing connectivity to SonarQube server...
-    curl -v http://172.18.65.185:9000/sonarqubedb
+    curl -v https://codeanalysis.silicus.com/
   displayName: 'Test SonarQube Server Connectivity'
   timeoutInMinutes: 10
   
