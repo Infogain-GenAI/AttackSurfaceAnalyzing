@@ -24,12 +24,6 @@ steps:
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
-
-- script: |
-    echo Testing connectivity to SonarQube server...
-    curl -v http://172.18.65.185:9000/sonarqubedb
-  displayName: 'Test SonarQube Server Connectivity'
-  timeoutInMinutes: 10
   
 - task: SonarQubePrepare@6
   inputs:
