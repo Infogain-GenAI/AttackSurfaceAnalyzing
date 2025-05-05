@@ -11,10 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Infogain-GenAI/AutoReviewer@master
+      - uses: Infogain-GenAI/Infogain_GAI_PR_Review@abrigo
         id: AutoReviewer
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           model_name: ${{ secrets.MODEL_NAME }}
           exclude_files: '*.json, *.md, *.yml, *.razor'
+          instructions_file_path: ${{ secrets.INSTRUCTIONS_FILE_PATH }}
