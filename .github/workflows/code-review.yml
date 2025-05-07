@@ -19,4 +19,4 @@ jobs:
           model_name: ${{ secrets.MODEL_NAME }}
           exclude_files: '*.json, *.md, *.yml, *.razor, *.css'
           model_temperature: ${{ secrets.MODEL_TEMPERATURE }} 
-          instructions_file_path: ${{ secrets.INSTRUCTIONS_FILE_PATH }}
+          instructions_file_path: ${{ vars.INSTRUCTIONS_FILE_PATH }}
