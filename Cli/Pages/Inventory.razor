@@ -1,0 +1,224 @@
+@page "/inventory"
+@using System.Diagnostics
+@using System.Globalization
+@using Microsoft.Win32
+@using System.Management
+
+<h4>Software Inventory</h4>
+<div class="container-fluid bg-custom mt-1 pb-1">
+    <button class="btn btn-primary" @onclick="Scan" style="margin-bottom: 10px;margin-top: 10px;">Scan</button>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+@if (softwareList.Count()>0)
+{ 
+   @if (!isLoading)
+{
+     <p>Last scan: @lastScanTime</p>
+     }
+    <table class="table" style="width: 100%; max-height: 400px; overflow-y: auto; display: block; color: #fff;">
+        <thead style="background-color: #f5f5f5; color: #333;">
+            <tr>
+                <th class="sortable" @onclick="() => SortByColumn(1)">
+                    Name
+                    @if (sortColumn == "Name")
+                    {
+                        <span>@(sortAscending ? "▲" : "▼")</span>
+                    }
+                </th>
+                <th class="sortable" @onclick="() => SortByColumn(2)">
+                    Version
+                    @if (sortColumn == "Version")
+                    {
+                        <span>@(sortAscending ? "▲" : "▼")</span>
+                    }
+                </th>
+                <th class="sortable" @onclick="() => SortByColumn(3)">
+                    Installation Date
+                    @if (sortColumn == "InstallDate")
+                    {
+                        <span>@(sortAscending ? "▲" : "▼")</span>
+                    }
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var software in GetSortedAndFilteredSoftware())
+            {
+                <tr>
+                    <td>@software.Name</td>
+                    <td>@software.Version</td>
+                    <td>@(software.InstallDate != DateTime.MinValue ? software.InstallDate.ToString("MM/dd/yyyy") : "")</td>
+                </tr>
+            }
+        </tbody>
+         <tfoot>
+        <tr>
+            <td colspan="3">
+                @if (isLoading)
+                {
+                        <div class="loading-container">
+                    <span>Loading...</span>
+                    <div class="loader"></div>
+                </div>
+                }
+            </td>
+        </tr>
+    </tfoot>
+    </table>
+}
+</div>
+@code {
+    private List<Software> softwareList = new List<Software>();
+    private bool isLoading;
+    private DateTime lastScanTime;
+
+    //sort
+    private string sortColumn = "Name";
+    private bool sortAscending = true;
+    private string filter;
+
+    private void SortByColumn(int column)
+    {
+        string columnName = "";
+switch (column)
+{
+    case 1:
+        columnName = "Name";
+        break;
+    case 2:
+        columnName = "Version";
+        break;
+    case 3:
+        columnName = "InstallDate";
+        break;  
+}
+        if (sortColumn == columnName)
+        {
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            sortColumn = columnName;
+            sortAscending = true;
+        }
+    }
+
+    private IEnumerable<Software> GetSortedAndFilteredSoftware()
+    {
+        var software = softwareList.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(filter))
+        {
+            software = software.Where(s => s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        switch (sortColumn)
+        {
+            case "Name":
+                software = sortAscending ? software.OrderBy(s => s.Name) : software.OrderByDescending(s => s.Name);
+                break;
+            case "Version":
+                software = sortAscending ? software.OrderBy(s => s.Version) : software.OrderByDescending(s => s.Version);
+                break;
+            case "InstallDate":
+                software = sortAscending ? software.OrderBy(s => s.InstallDate) : software.OrderByDescending(s => s.InstallDate);
+                break;
+        }
+
+        return software;
+    }
+
+    private async Task Scan()
+    {
+        isLoading = true;
+        softwareList.Clear();
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Factory.StartNew(() =>
+    {
+        ReadSoftwareFromRegistry(Registry.LocalMachine);
+        ReadSoftwareFromRegistry(Registry.CurrentUser);
+    }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
+ 
+ await InvokeAsync(StateHasChanged);
+
+    await Task.Factory.StartNew(() =>
+    {
+        ReadSoftwareFromWmi();
+    }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
+
+        // Call InsertInventoryRecords here
+        Microsoft.CST.AttackSurfaceAnalyzer.Cli.AttackSurfaceAnalyzerClient.InsertInventoryRecords(DateTime.Now.ToString(), RUN_TYPE.INVENTORY.ToString(), Newtonsoft.Json.JsonConvert.SerializeObject(softwareList));
+
+        isLoading = false;
+        lastScanTime = DateTime.Now;
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ReadSoftwareFromRegistry(RegistryKey registryKey)
+    {
+        string uninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+        using (RegistryKey rk = registryKey.OpenSubKey(uninstallKey))
+        {
+            foreach (string skName in rk.GetSubKeyNames())
+            {
+                using (RegistryKey sk = rk.OpenSubKey(skName))
+                {
+                    try
+                    {
+                        string name = (string)sk.GetValue("DisplayName");
+                        string version = (string)sk.GetValue("DisplayVersion");
+                        string installDate = (string)sk.GetValue("InstallDate");
+
+                        if (!string.IsNullOrWhiteSpace(name) && !SoftwareExists(name, version))
+                        {
+                            DateTime.TryParseExact(installDate, "yyyyMMdd", null, DateTimeStyles.None, out DateTime parsedInstallDate);
+                            var software = new Software { Name = name, Version = version, InstallDate = parsedInstallDate };
+                            softwareList.Add(software);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle the exception if necessary
+                    }
+                }
+            }
+        }
+        
+    }
+
+    private async Task ReadSoftwareFromWmi()
+    {
+        var searcher = new ManagementObjectSearcher("SELECT Name, Version, InstallDate FROM Win32_Product");
+
+        foreach (ManagementObject software in searcher.Get())
+        {
+            string name = (string)software["Name"];
+            string version = (string)software["Version"];
+            string installDate = (string)software["InstallDate"];
+
+            if (!string.IsNullOrWhiteSpace(name) && !SoftwareExists(name, version))
+            {
+                DateTime.TryParseExact(installDate, "yyyyMMdd", null, DateTimeStyles.None, out DateTime parsedInstallDate);
+                var softwareItem = new Software { Name = name, Version = version, InstallDate = parsedInstallDate };
+                softwareList.Add(softwareItem);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private bool SoftwareExists(string name, string version)
+    {
+        return softwareList.Any(s => s.Name == name && s.Version == version);
+    }
+    private class Software
+    {
+        public string Name { get; set; }
+        public string Version { get; set; }
+        public DateTime InstallDate { get; set; }
+    }
+}

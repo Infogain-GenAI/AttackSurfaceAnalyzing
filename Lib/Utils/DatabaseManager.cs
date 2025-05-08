@@ -104,6 +104,8 @@ namespace Microsoft.CST.AttackSurfaceAnalyzer.Utils
 
         public abstract void InsertRun(AsaRun run);
 
+        public abstract void InsertInventoryRecord(string runId, string type, string softwareDetails);
+
         public abstract void RollBack();
 
         public abstract PLATFORM RunIdToPlatform(string runid);

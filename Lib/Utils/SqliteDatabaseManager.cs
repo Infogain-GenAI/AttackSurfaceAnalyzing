@@ -839,6 +839,34 @@ namespace Microsoft.CST.AttackSurfaceAnalyzer.Utils
             }
         }
 
+        public override void InsertInventoryRecord(string runId, string type, string softwareDetails)
+        {
+
+
+            // Insert the inventory record into the database.
+            // You'll need to replace this with your actual database insertion code.
+            if (MainConnection != null)
+            {
+                using var cmd = new SqliteCommand(SQL_INSERT_RUN, MainConnection.Connection, MainConnection.Transaction);
+                cmd.Parameters.AddWithValue("@run_id", runId);
+                cmd.Parameters.AddWithValue("@type", type);
+                cmd.Parameters.AddWithValue("@serialized", softwareDetails);
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SqliteException e)
+                {
+                    Log.Warning(e.StackTrace);
+                    Log.Warning(e.Message);
+                }
+            }
+            else
+            {
+                Log.Debug("Failed to InsertRun because MainConnection is null.");
+            }
+        }
         public int PopulateConnections()
         {
             var connectionsCreated = 0;
