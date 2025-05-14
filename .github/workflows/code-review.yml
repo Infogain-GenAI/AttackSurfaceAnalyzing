@@ -1,0 +1,23 @@
+name: 'code-review'
+on:
+  pull_request:
+permissions:
+  contents: write
+  pull-requests: write 
+  issues: read
+  packages: none
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Infogain-GenAI/Infogain_GAI_PR_Review@abrigo
+        id: InfogainPrReview
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          model_name: ${{ secrets.MODEL_NAME }}
+          exclude_files: '*.json, *.md, *.yml, *.razor, *.css'
+          model_temperature: ${{ secrets.MODEL_TEMPERATURE }} 
+          instructions_file_path: ${{ vars.INSTRUCTIONS_FILE_PATH }}
+          system_profile: ${{ vars.SYSTEM_PROFILE }}
